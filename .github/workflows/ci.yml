@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev,serial]"
+      - run: ruff check src tests
+      - run: pytest -q
+      - name: Test bench on the example installations
+        run: |
+          dali-sim test office-16 --suite all --junit testbench-office.xml
+          dali-sim commission commissioning-64
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t dali-sim .
+      - name: Smoke test the container
+        run: |
+          docker run -d --name dsim -p 8080:8080 -p 5555:5555 dali-sim
+          for i in $(seq 1 30); do curl -sf localhost:8080/api/info && break; sleep 1; done
+          docker run --rm --network host dali-sim test --adapter remote:127.0.0.1:5555 --suite bus
+          docker rm -f dsim

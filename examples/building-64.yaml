@@ -1,0 +1,16 @@
+# A full bus: 64 control gear and 16 control devices (the DALI maximum for
+# gear). Use it for capacity, timing and commissioning tests.
+name: Full bus (64 gear + 16 devices)
+description: >
+  The largest single DALI bus: 64 control gear and 16 control devices with
+  32 instances. Watch the bus load and the time a full scan takes.
+seed: 64
+speed: 1.0
+world: {outdoor_lux: 10000, people: true}
+gear:
+  - {name: "L{n:02d}", count: 48, start_address: 0, type: led, groups: [0], fade_time: 2}
+  - {name: "TW{n:02d}", count: 12, start_address: 48, type: tunable-white, groups: [1], fade_time: 2}
+  - {name: "EM{n}", count: 4, start_address: 60, type: emergency, groups: [2]}
+devices:
+  - {name: "Switch {n}", count: 8, start_address: 0, event_scheme: 2, instances: [push_button, push_button]}
+  - {name: "Sensor {n}", count: 8, start_address: 8, event_scheme: 2, instances: [{type: occupancy, hold_s: 60}, light_sensor]}

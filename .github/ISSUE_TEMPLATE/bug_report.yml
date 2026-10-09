@@ -1,0 +1,21 @@
+name: Bug report
+description: Something in dali-sim does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Config file or example name, commands, and the bus monitor CSV export if relevant.
+  - type: input
+    id: version
+    attributes:
+      label: dali-sim version and platform
+      placeholder: "0.1.0, Python 3.12, Docker on Ubuntu 24.04"

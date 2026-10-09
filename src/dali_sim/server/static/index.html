@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dali-sim</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='7' r='5' fill='%23f5c542'/%3E%3Crect x='6' y='12' width='4' height='3' fill='%23888'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>dali-sim <span id="simname"></span></h1>
+  <label class="inline">Scenario <select id="scenario" aria-label="Scenario"></select></label>
+  <label class="inline">Speed
+    <select id="speed" aria-label="Simulation speed">
+      <option value="0.1">0.1x</option><option value="0.5">0.5x</option><option value="1" selected>1x</option>
+      <option value="2">2x</option><option value="10">10x</option><option value="60">60x</option><option value="600">600x</option>
+    </select></label>
+  <label class="inline"><input type="checkbox" id="buspower" checked> Bus power</label>
+  <span class="grow"></span>
+  <span class="chip">t <b id="simtime">0</b> s</span>
+  <span class="chip">frames <b id="st-fwd">0</b></span>
+  <span class="chip">answers <b id="st-bwd">0</b></span>
+  <span class="chip">events <b id="st-ev">0</b></span>
+  <span class="chip">collisions <b id="st-col">0</b></span>
+  <span class="chip">load <b id="st-power">0</b> W</span>
+  <span class="chip"><span class="dot" id="wsdot"></span><span id="wsstate">offline</span></span>
+  <button id="theme" title="Toggle light/dark theme">Theme</button>
+</header>
+<nav id="tabs">
+  <button data-view="installation" class="active">Installation</button>
+  <button data-view="monitor">Bus monitor</button>
+  <button data-view="console">Console</button>
+  <button data-view="commission">Commissioning</button>
+  <button data-view="testbench">Test bench</button>
+  <button data-view="hardware">Hardware</button>
+  <button data-view="help">Help</button>
+</nav>
+<main>
+
+<section class="view active" id="view-installation">
+  <div class="grid-2">
+    <div class="stack">
+      <div class="panel">
+        <div class="row" style="justify-content: space-between">
+          <h2 id="plan-title">Installation</h2>
+          <div class="row">
+            <label class="inline">Daylight <input type="range" id="daylight" min="0" max="30000" step="500" aria-label="Outdoor daylight in lux"> <span id="daylight-v" class="mono"></span> lx</label>
+            <label class="inline"><input type="checkbox" id="people"> People</label>
+          </div>
+        </div>
+        <p class="muted" id="sim-desc" style="margin:4px 0 8px"></p>
+        <svg id="plan" role="img" aria-label="Floor plan with lamps and sensors"></svg>
+      </div>
+      <div class="panel">
+        <h2>Control gear by short address</h2>
+        <p class="muted" style="margin:0 0 8px">Each cell is one short address (A0..A63); the fill shows the light output. Click to select.</p>
+        <div class="amap" id="gearmap"></div>
+        <h3>Unaddressed gear</h3>
+        <div class="row" id="unaddressed"></div>
+      </div>
+      <div class="panel">
+        <h2>Control devices</h2>
+        <div class="cards" id="devcards"></div>
+      </div>
+    </div>
+    <aside class="panel" id="details" style="align-self:start; position: sticky; top: 110px">
+      <h2>Details</h2>
+      <p class="muted">Select a lamp or a device.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="view" id="view-monitor">
+  <div class="panel stack">
+    <div class="row">
+      <button id="mon-pause">Pause</button>
+      <button id="mon-clear">Clear</button>
+      <button id="mon-csv">Export CSV</button>
+      <input type="text" id="mon-filter" placeholder="filter (text, hex, source)" aria-label="Filter">
+      <label class="inline"><input type="checkbox" id="mon-forward" checked> forward</label>
+      <label class="inline"><input type="checkbox" id="mon-backward" checked> answers</label>
+      <label class="inline"><input type="checkbox" id="mon-event" checked> events</label>
+      <label class="inline"><input type="checkbox" id="mon-other" checked> other</label>
+      <span class="muted" id="mon-count"></span>
+    </div>
+    <div class="mon-wrap"><table class="mon"><thead><tr><th>#</th><th>time (s)</th><th>source</th><th>kind</th><th>bits</th><th>hex</th><th>decoded</th><th>ms</th></tr></thead><tbody id="mon-body"></tbody></table></div>
+    <div>
+      <h3>Waveform of the selected frame (bus level, Manchester coded)</h3>
+      <svg id="wave" role="img" aria-label="Waveform"></svg>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-console">
+  <div class="panel stack">
+    <h2>Send commands</h2>
+    <div class="form">
+      <label for="c-via">Bus</label><select id="c-via"><option value="virtual">virtual bus</option></select>
+      <label for="c-kind">Kind</label>
+      <select id="c-kind">
+        <option value="gear">control gear command (16-bit)</option>
+        <option value="dapc">direct arc power (DAPC)</option>
+        <option value="gear_special">special command (16-bit)</option>
+        <option value="device">control device command (24-bit)</option>
+        <option value="device_special">control device special command (24-bit)</option>
+      </select>
+      <label for="c-target">Address</label><input type="text" id="c-target" value="BC" placeholder="A5, G2, BC, BCU (gear) / 5, DG3, BC (devices)">
+      <label for="c-dt">Device type</label>
+      <select id="c-dt"><option value="">none (standard command)</option><option value="1">DT1 emergency</option><option value="6">DT6 LED</option><option value="8">DT8 colour</option></select>
+      <label for="c-inst">Instance</label><input type="text" id="c-inst" value="device" placeholder="device, all, or 0..31">
+      <label for="c-cmd">Command</label><select id="c-cmd"></select>
+      <label for="c-level">Level / data</label><input type="number" id="c-level" min="0" max="255" value="0">
+      <label>DTR0 / DTR1 / DTR2</label>
+      <div class="row"><input type="number" id="c-dtr0" min="0" max="255" placeholder="DTR0" style="width:90px"><input type="number" id="c-dtr1" min="0" max="255" placeholder="DTR1" style="width:90px"><input type="number" id="c-dtr2" min="0" max="255" placeholder="DTR2" style="width:90px"></div>
+      <span></span><div class="row"><button class="primary" id="c-send">Send</button><span class="muted" id="c-hint"></span></div>
+      <label for="c-raw">Raw frame</label>
+      <div class="row"><input type="text" id="c-raw" class="mono" placeholder="FF 90  or  C1 01 FF" style="width:200px"><button id="c-raw-send">Send raw</button><label class="inline"><input type="checkbox" id="c-raw-twice"> twice</label></div>
+    </div>
+    <h3>Result</h3>
+    <div class="out" id="c-out"></div>
+    <h3>Quick actions</h3>
+    <div class="row">
+      <button data-quick="on">All on (RECALL MAX)</button>
+      <button data-quick="off">All off</button>
+      <button data-quick="query">Who is there? (QUERY CONTROL GEAR PRESENT, broadcast)</button>
+      <button data-quick="identify">Identify all</button>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-commission">
+  <div class="grid-2">
+    <div class="panel stack">
+      <h2>Commissioning (addressing)</h2>
+      <p class="muted">Units without a short address are found with the random-address binary search: INITIALISE, RANDOMISE, then COMPARE / SEARCHADDR until the lowest random address is isolated, PROGRAM SHORT ADDRESS, WITHDRAW, repeat.</p>
+      <div class="row">
+        <label class="inline">Bus <select id="cm-via"><option value="virtual">virtual bus</option></select></label>
+        <button class="primary" id="cm-gear">Address new gear</button>
+        <button id="cm-gear-all">Re-address all gear</button>
+        <button id="cm-dev">Address new control devices</button>
+        <button id="cm-scan">Scan bus</button>
+        <button id="cm-clear">Clear all addresses (virtual)</button>
+        <button id="cm-cancel">Cancel</button>
+      </div>
+      <div>
+        <h3>Binary search over the 24-bit random address space</h3>
+        <div class="search-bar"><div class="range" id="cm-range"></div><div class="lbl" id="cm-range-l">idle</div></div>
+      </div>
+      <div class="row"><span class="chip">found <b id="cm-found">0</b></span><span class="chip">bus time <b id="cm-time">0</b> s</span><span class="muted" id="cm-state"></span></div>
+      <div class="out" id="cm-log"></div>
+    </div>
+    <div class="panel">
+      <h2>Address map</h2>
+      <div class="amap" id="cm-map"></div>
+      <h3>Scan result</h3>
+      <div class="out" id="cm-scan-out"></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-testbench">
+  <div class="panel stack">
+    <h2>Pre-compliance test bench</h2>
+    <p class="muted">Checks protocol behaviour against the public DALI literature: answers, send-twice handling, reset values, limits, groups, scenes, fading, memory bank 0, instance configuration and address conflicts. These are <b>not</b> the official DALI Alliance certification tests; use them to find problems before you go to a test house. Run them against virtual units, or against real ones through a hardware bridge.</p>
+    <div class="row">
+      <label class="inline">Bus <select id="tb-via"><option value="virtual">virtual bus</option></select></label>
+      <label class="inline">Suite <select id="tb-suite"><option value="bus">bus (addressing, conflicts)</option><option value="gear">control gear</option><option value="devices">control devices</option><option value="all">all</option></select></label>
+      <label class="inline">Addresses <input type="text" id="tb-addr" placeholder="all, or e.g. 0-3,7" style="width:120px"></label>
+      <button class="primary" id="tb-run">Run</button>
+    </div>
+    <div class="progress"><div id="tb-prog"></div></div>
+    <div class="row"><span class="chip">passed <b id="tb-pass">0</b></span><span class="chip">failed <b id="tb-fail">0</b></span></div>
+    <table class="results"><thead><tr><th>result</th><th>target</th><th>test</th><th>detail</th></tr></thead><tbody id="tb-body"></tbody></table>
+  </div>
+</section>
+
+<section class="view" id="view-hardware">
+  <div class="panel stack">
+    <h2>Hardware bridges</h2>
+    <div id="hw-list" class="cards"></div>
+    <p class="muted">Start a bridge from the command line, for example:</p>
+    <div class="out">dali-sim serve examples/office-16.yaml --adapter hasseb --bridge-mode controller
+dali-sim serve examples/office-16.yaml --adapter serial:/dev/ttyUSB0 --bridge-mode devices
+dali-sim serve examples/office-16.yaml --adapter remote:192.168.1.20:5555 --bridge-mode hybrid</div>
+    <p class="muted"><b>controller</b>: the simulator drives real devices. <b>devices</b>: a real controller drives the virtual devices (answers need an adapter that can send backward frames). <b>hybrid</b>: virtual and real devices act as one bus.</p>
+  </div>
+</section>
+
+<section class="view" id="view-help">
+  <div class="panel">
+    <h2>How to use</h2>
+    <ul>
+      <li><b>Installation</b>: lamps glow with their light output (DT8 lamps in their colour). Click a lamp for its variables and controls. Hold the push buttons, move sliders, toggle occupancy and set the daylight to drive the application controller rules.</li>
+      <li><b>Bus monitor</b>: every frame with timing and decoding. Click a row to see its Manchester waveform.</li>
+      <li><b>Console</b>: send any IEC 62386-102/103 command. Configuration commands are sent twice automatically.</li>
+      <li><b>Commissioning</b>: clear addresses, then watch the binary search find every unit.</li>
+      <li><b>Test bench</b>: pre-compliance checks on virtual or real units.</li>
+    </ul>
+    <p class="muted">The TCP API on port 5555 and the REST API under <code>/api</code> are described in the docs folder of the repository.</p>
+  </div>
+</section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

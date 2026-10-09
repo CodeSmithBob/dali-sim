@@ -1,0 +1,83 @@
+# A small office: 16 LED drivers in 4 rooms, wall switches, presence and
+# light sensors, and an application controller with rules.
+name: Office (16 lamps)
+description: >
+  Four rooms with 4 LED drivers each. Every room has a 2-button wall switch
+  and a multi-sensor (occupancy + light). The application controller
+  switches groups, dims on long press, follows occupancy and keeps 500 lx.
+seed: 16
+speed: 1.0
+commissioned: true
+initial_level: 0
+
+world:
+  outdoor_lux: 8000
+  people: false
+
+rooms:
+  - {name: Room 1, x: 0, y: 0, w: 4, h: 3, daylight_factor: 0.04}
+  - {name: Room 2, x: 4.2, y: 0, w: 4, h: 3, daylight_factor: 0.03}
+  - {name: Room 3, x: 0, y: 3.2, w: 4, h: 3, daylight_factor: 0.02}
+  - {name: Room 4, x: 4.2, y: 3.2, w: 4, h: 3, daylight_factor: 0.01}
+
+gear:
+  - {name: "R1 lamp {n}", count: 4, start_address: 0, type: led, groups: [0], room: Room 1, power_w: 28, fade_time: 3}
+  - {name: "R2 lamp {n}", count: 4, start_address: 4, type: led, groups: [1], room: Room 2, power_w: 28, fade_time: 3}
+  - {name: "R3 lamp {n}", count: 4, start_address: 8, type: led, groups: [2], room: Room 3, power_w: 28, fade_time: 3}
+  - {name: "R4 lamp {n}", count: 4, start_address: 12, type: tunable-white, groups: [3], room: Room 4, power_w: 32, fade_time: 3}
+
+devices:
+  - name: R1 switch
+    short_address: 0
+    room: Room 1
+    event_scheme: 2          # device/instance: events carry short address + instance
+    instances: [{type: push_button, label: "On/Off"}, {type: push_button, label: "Scene"}]
+  - name: R1 sensor
+    short_address: 1
+    room: Room 1
+    event_scheme: 2
+    instances: [{type: occupancy, hold_s: 60}, {type: light_sensor, max_lux: 2000}]
+  - name: R2 switch
+    short_address: 2
+    room: Room 2
+    event_scheme: 2
+    instances: [{type: push_button, label: "On/Off"}, {type: slider, label: "Dimmer"}]
+  - name: R3 sensor
+    short_address: 3
+    room: Room 3
+    event_scheme: 2
+    instances: [{type: occupancy, hold_s: 30}]
+  - name: R4 switch
+    short_address: 4
+    room: Room 4
+    event_scheme: 2
+    instances: [{type: push_button, label: "On/Off"}, {type: push_button, label: "Warm/Cool"}]
+
+automation:
+  name: app-controller
+  short_address: 63
+  rules:
+    - when: {short_address: 0, instance: 0, event: short_press}
+      do: {toggle: G0}
+    - when: {short_address: 0, instance: 0, event: long_press_repeat}
+      do: {up: G0}
+    - when: {short_address: 0, instance: 1, event: short_press}
+      do: {scene: {target: G0, scene: 1}}
+    - when: {short_address: 1, instance: 0, event: occupied}
+      do: {last_active: G0}
+    - when: {short_address: 1, instance: 0, event: vacant}
+      do: {off: G0}
+    - when: {short_address: 2, instance: 0, event: short_press}
+      do: {toggle: G1}
+    - when: {short_address: 2, instance: 1, event: position}
+      do: {dim_by_position: G1}
+    - when: {short_address: 3, instance: 0, event: occupied}
+      do: {recall_max: G2}
+    - when: {short_address: 3, instance: 0, event: vacant}
+      do: {off: G2}
+    - when: {short_address: 4, instance: 0, event: short_press}
+      do: {toggle: G3}
+    - when: {short_address: 4, instance: 1, event: short_press}
+      do: {scene: {target: G3, scene: 2}}
+  daylight:
+    - {sensor: {short_address: 1, instance: 1}, target: G0, setpoint_lux: 500}

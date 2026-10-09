@@ -1,0 +1,22 @@
+name: Device behaves differently
+description: The simulator answers differently from a real DALI device or from the standard
+labels: [protocol]
+body:
+  - type: markdown
+    attributes:
+      value: "Please do not paste text from IEC 62386. Describe the behaviour in your own words and give the part and clause."
+  - type: textarea
+    id: frames
+    attributes:
+      label: Frames and answers
+      description: "Hex frames sent, what dali-sim answered, what the real device (or the standard) does."
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Real device (make, model, firmware) or reference
+  - type: input
+    id: clause
+    attributes:
+      label: IEC 62386 part and clause, or public source

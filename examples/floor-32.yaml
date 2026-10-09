@@ -1,0 +1,49 @@
+# One floor: 32 control gear (LED, tunable white, emergency) in 8 zones,
+# 8 control devices. Good for group/scene and multi-master event testing.
+name: Floor (32 gear)
+description: >
+  32 control gear in 8 zones of 4 (two zones tunable white, one RGBW zone,
+  emergency luminaires in zone 8), 8 control devices, people walking around.
+seed: 32
+speed: 1.0
+initial_level: 0
+world: {outdoor_lux: 12000, people: true}
+rooms:
+  - {name: "Zone 1", x: 0, y: 0, w: 4, h: 3, daylight_factor: 0.04}
+  - {name: "Zone 2", x: 4.2, y: 0, w: 4, h: 3, daylight_factor: 0.04}
+  - {name: "Zone 3", x: 8.4, y: 0, w: 4, h: 3, daylight_factor: 0.04}
+  - {name: "Zone 4", x: 12.6, y: 0, w: 4, h: 3, daylight_factor: 0.04}
+  - {name: "Zone 5", x: 0, y: 3.2, w: 4, h: 3, daylight_factor: 0.01}
+  - {name: "Zone 6", x: 4.2, y: 3.2, w: 4, h: 3, daylight_factor: 0.01}
+  - {name: "Zone 7", x: 8.4, y: 3.2, w: 4, h: 3, daylight_factor: 0.01}
+  - {name: "Zone 8", x: 12.6, y: 3.2, w: 4, h: 3, daylight_factor: 0.0}
+gear:
+  - {name: "Z1-{n}", count: 4, start_address: 0, type: led, groups: [0, 15], room: Zone 1, fade_time: 2}
+  - {name: "Z2-{n}", count: 4, start_address: 4, type: led, groups: [1, 15], room: Zone 2, fade_time: 2}
+  - {name: "Z3-{n}", count: 4, start_address: 8, type: tunable-white, groups: [2, 15], room: Zone 3, fade_time: 2}
+  - {name: "Z4-{n}", count: 4, start_address: 12, type: tunable-white, groups: [3, 15], room: Zone 4, fade_time: 2}
+  - {name: "Z5-{n}", count: 4, start_address: 16, type: led, groups: [4, 15], room: Zone 5, fade_time: 2}
+  - {name: "Z6-{n}", count: 4, start_address: 20, type: led, groups: [5, 15], room: Zone 6, fade_time: 2}
+  - {name: "Z7-{n}", count: 4, start_address: 24, type: rgbw, groups: [6], room: Zone 7, fade_time: 2}
+  - {name: "EM-{n}", count: 4, start_address: 28, type: emergency, groups: [7], room: Zone 8, rated_duration_min: 60}
+devices:
+  - {name: "PIR {n}", count: 8, start_address: 0, room: "Zone {n}", event_scheme: 2, instances: [{type: occupancy, hold_s: 120}]}
+automation:
+  short_address: 63
+  rules:
+    - {when: {short_address: 0, event: occupied}, do: {recall_max: G0}}
+    - {when: {short_address: 0, event: vacant}, do: {off: G0}}
+    - {when: {short_address: 1, event: occupied}, do: {recall_max: G1}}
+    - {when: {short_address: 1, event: vacant}, do: {off: G1}}
+    - {when: {short_address: 2, event: occupied}, do: {recall_max: G2}}
+    - {when: {short_address: 2, event: vacant}, do: {off: G2}}
+    - {when: {short_address: 3, event: occupied}, do: {recall_max: G3}}
+    - {when: {short_address: 3, event: vacant}, do: {off: G3}}
+    - {when: {short_address: 4, event: occupied}, do: {recall_max: G4}}
+    - {when: {short_address: 4, event: vacant}, do: {off: G4}}
+    - {when: {short_address: 5, event: occupied}, do: {recall_max: G5}}
+    - {when: {short_address: 5, event: vacant}, do: {off: G5}}
+    - {when: {short_address: 6, event: occupied}, do: {recall_max: G6}}
+    - {when: {short_address: 6, event: vacant}, do: {off: G6}}
+    - {when: {short_address: 7, event: occupied}, do: {recall_max: G7}}
+    - {when: {short_address: 7, event: vacant}, do: {dapc: {target: G7, level: 120}}}

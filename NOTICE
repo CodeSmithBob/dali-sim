@@ -1,0 +1,11 @@
+dali-sim
+Copyright 2026 The dali-sim contributors
+
+This product is licensed under the Apache License, Version 2.0.
+
+DALI, DALI-2 and D4i are trademarks of the Digital Illumination Interface
+Alliance (DALI Alliance). This project is not affiliated with, endorsed by or
+certified by the DALI Alliance. IEC 62386 is a standard published by the
+International Electrotechnical Commission; this project does not contain text
+from that standard. It implements behaviour described in public sources listed
+in docs/sources.md.

@@ -1,0 +1,27 @@
+# docker compose up            -> simulator on http://localhost:8080
+# docker compose --profile demo up
+#                              -> also runs a second container that uses the
+#                                 simulator over the TCP API like a controller
+services:
+  dali-sim:
+    build: .
+    image: dali-sim:latest
+    command: ["serve", "office-16", "--host", "0.0.0.0", "--port", "8080", "--tcp-port", "5555"]
+    ports:
+      - "8080:8080"   # web UI and REST API
+      - "5555:5555"   # JSON-lines TCP API
+    restart: unless-stopped
+    # Pass a real adapter into the container (Linux) and bridge to it:
+    # devices:
+    #   - /dev/hidraw0:/dev/hidraw0
+    # command: ["serve", "office-16", "--host", "0.0.0.0", "--adapter", "hasseb:/dev/hidraw0", "--bridge-mode", "controller"]
+
+  # Example client: runs the pre-compliance test bench against the simulator
+  # through the TCP API, the same way a controller in another container would.
+  testbench:
+    image: dali-sim:latest
+    profiles: ["demo"]
+    depends_on:
+      dali-sim:
+        condition: service_healthy
+    command: ["test", "--adapter", "remote:dali-sim:5555", "--suite", "bus"]

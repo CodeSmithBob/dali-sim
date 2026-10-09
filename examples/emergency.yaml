@@ -1,0 +1,8 @@
+# Emergency lighting (DT1): cut the mains of a luminaire in the UI and watch
+# it switch to battery; run function and duration tests from the console.
+name: Emergency lighting (DT1)
+seed: 1
+speed: 10.0
+gear:
+  - {name: "Exit {n}", count: 4, start_address: 0, type: emergency, rated_duration_min: 60, emergency_level: 200, groups: [0]}
+  - {name: "Corridor {n}", count: 4, start_address: 4, type: led, groups: [1]}

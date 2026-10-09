@@ -1,0 +1,18 @@
+# Colour control (DT8) test bench: tunable white, RGBW, RGBWAF and xy gear.
+name: Colour lab (DT8)
+seed: 8
+speed: 1.0
+initial_level: 0
+gear:
+  - {name: "TW {n}", count: 4, start_address: 0, type: tunable-white, coolest_k: 6500, warmest_k: 2700, groups: [0]}
+  - {name: "RGBW {n}", count: 4, start_address: 4, type: rgbw, groups: [1]}
+  - {name: "RGBWAF {n}", count: 2, start_address: 8, type: rgbwaf, channels: 6, groups: [2]}
+  - {name: "XY {n}", count: 2, start_address: 10, type: xy, groups: [3]}
+devices:
+  - {name: Colour keypad, short_address: 0, event_scheme: 2, instances: [push_button, push_button, push_button, push_button]}
+automation:
+  rules:
+    - {when: {short_address: 0, instance: 0, event: short_press}, do: {toggle: G0}}
+    - {when: {short_address: 0, instance: 1, event: short_press}, do: {toggle: G1}}
+    - {when: {short_address: 0, instance: 2, event: short_press}, do: {toggle: G2}}
+    - {when: {short_address: 0, instance: 3, event: short_press}, do: {toggle: G3}}

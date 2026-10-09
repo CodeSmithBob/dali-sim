@@ -1,0 +1,12 @@
+# 64 control gear and 16 control devices fresh from the factory: no short
+# addresses. Practise commissioning: run "Address all" in the web UI or
+# `dali-sim commission examples/commissioning-64.yaml`.
+name: Commissioning practice (64 + 16, unaddressed)
+seed: 6464
+speed: 1.0
+commissioned: false
+gear:
+  - {name: "Gear {n:02d}", count: 56, type: led}
+  - {name: "TW {n}", count: 8, type: tunable-white}
+devices:
+  - {name: "Input {n:02d}", count: 16, instances: [push_button, occupancy]}

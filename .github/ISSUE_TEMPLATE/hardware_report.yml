@@ -1,0 +1,27 @@
+name: Hardware report
+description: Results with a real DALI interface (works, or does not)
+labels: [hardware]
+body:
+  - type: input
+    id: adapter
+    attributes:
+      label: Interface (make, model, firmware) and adapter spec used
+      placeholder: "Hasseb DALI Master, firmware 2.x, --adapter hasseb"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options: ["works", "partly works", "does not work"]
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output of `dali-sim adapters`, `dali-sim scan --adapter ...` and `dali-sim test --adapter ... --suite bus`
+      render: text
+  - type: textarea
+    id: notes
+    attributes:
+      label: Devices on the bus, bridge mode, anything else

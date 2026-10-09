@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dali-sim"
+version = "0.1.0"
+description = "Open-source DALI / DALI-2 (IEC 62386) bus simulator with hardware bridges and a web visualisation"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+keywords = ["dali", "dali-2", "iec-62386", "lighting", "simulator", "building-automation", "d4i"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Manufacturing",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Home Automation",
+  "Topic :: System :: Hardware",
+  "Topic :: Software Development :: Testing",
+]
+dependencies = ["aiohttp>=3.9", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+serial = ["pyserial>=3.5"]
+hid = ["hidapi>=0.14"]
+gpio = ["pigpio>=1.78"]
+hardware = ["pyserial>=3.5", "hidapi>=0.14"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.5"]
+
+[project.scripts]
+dali-sim = "dali_sim.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/CodeSmithBob/dali-sim"
+Issues = "https://github.com/CodeSmithBob/dali-sim/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dali_sim = ["server/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E731", "B008", "B905"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dali_sim", "conftest"]
