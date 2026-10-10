@@ -14,6 +14,7 @@ They let software written for a real interface talk to the simulator:
 from __future__ import annotations
 
 import asyncio
+from collections import deque
 from collections.abc import Callable
 
 from .bus import Bus, BusRecord
@@ -234,7 +235,7 @@ class HidEmulator:
     def __init__(self, bus: Bus) -> None:
         self.bus = bus
         self.on_report: Callable[[bytes], None] | None = None
-        self.written: list[bytes] = []
+        self.written: deque[bytes] = deque(maxlen=100)  # recent reports, for debugging
 
     def open(self, loop: asyncio.AbstractEventLoop) -> str:
         return "emulator"

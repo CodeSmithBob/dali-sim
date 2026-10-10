@@ -93,6 +93,7 @@ dali-sim adapters                           # supported interfaces and their cap
   ```
 - **REST and WebSocket** under `/api` and `/ws` drive the web UI. See [docs/api.md](docs/api.md).
 - **Python**: import `dali_sim` and build a bus in a few lines. See [docs/python.md](docs/python.md).
+- **Fake USB stick**: on Linux, `dali-sim serve --usb-stick tridonic` (or `lunatone`, `hasseb`) makes the simulator appear as that USB DALI stick, so existing DALI master software talks to the virtual bus without any wires. See [docs/hardware.md](docs/hardware.md#fake-usb-stick-no-wires).
 - **Interface emulation**: point software written for an AtxLED HAT, a Lunatone LUBA interface, a daliserver or the dali-sim serial protocol at the simulator (`--pty`, `--pty-protocol`, `--daliserver-port`). See [docs/hardware.md](docs/hardware.md).
 
 ## Real hardware

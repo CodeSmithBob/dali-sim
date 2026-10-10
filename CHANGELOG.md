@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Fake USB DALI sticks on Linux (`--usb-stick tridonic|lunatone|hasseb`, via `/dev/uhid`): DALI master software that expects one of these sticks talks to the simulator without wires.
+
 ## 0.1.0 (unreleased)
 
 First public version.

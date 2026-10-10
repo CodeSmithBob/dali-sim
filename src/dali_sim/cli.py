@@ -75,6 +75,18 @@ async def cmd_serve(args: argparse.Namespace) -> None:
             ds = DaliServerProtocolServer(sim, args.host, args.daliserver_port)
             await ds.start()
             print(f"  daliserv {args.host}:{ds.port} (daliserver protocol)")
+        for kind in args.usb_stick or []:
+            from .server.uhid import FakeUsbStick
+
+            stick = FakeUsbStick(sim, kind)
+            try:
+                await stick.start()
+            except RuntimeError as exc:
+                print(f"  usb      fake {kind} stick NOT started: {exc}")
+                continue
+            await asyncio.sleep(0.3)  # let the kernel create the hidraw node
+            nodes = ", ".join(stick.hidraw_paths()) or "see /dev/hidraw*"
+            print(f"  usb      fake {kind} stick {stick.model.vid:04x}:{stick.model.pid:04x} at {nodes}")
 
     if args.no_web:
         await sim.start()
@@ -315,6 +327,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="also offer a virtual serial port, default link /tmp/dali-sim-tty")
     s.add_argument("--pty-protocol", default="dalisim", choices=["dalisim", "atxled", "luba"],
                    help="protocol on the virtual serial port: dali-sim line protocol, AtxLED HAT or Lunatone LUBA")
+    s.add_argument("--usb-stick", action="append", choices=["tridonic", "lunatone", "hasseb"], metavar="KIND",
+                   help="appear as a USB DALI stick (tridonic, lunatone or hasseb) via Linux /dev/uhid; repeatable")
     s.add_argument("--daliserver-port", type=int, default=0, metavar="PORT",
                    help="also serve the daliserver TCP protocol (usually 55825)")
     s.set_defaults(func=cmd_serve, is_async=True)

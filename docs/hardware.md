@@ -79,5 +79,41 @@ The other direction: your software expects an interface, and you give it the sim
 | a Lunatone LUBA interface | `dali-sim serve --pty /tmp/luba --pty-protocol luba` | `/tmp/luba` |
 | daliserver (e.g. python-dali `DaliServer`) | `dali-sim serve --daliserver-port 55825` | `localhost:55825` |
 | anything, over TCP | `dali-sim serve` | the [TCP API](api.md), port 5555 |
+| a USB stick (Tridonic, Lunatone, hasseb) | `sudo dali-sim serve --usb-stick tridonic` | the stick, as usual (see below) |
 
-USB HID emulation (appearing as a real hasseb or Tridonic stick through Linux `/dev/uhid`) is not implemented yet. The protocol emulators exist (`dali_sim/emulators.py`), so this is a good contribution.
+### Fake USB stick (no wires)
+
+Your DALI master software normally talks to a USB DALI stick. With `--usb-stick`, the simulator **becomes** that stick: Linux shows a new USB DALI device with the real stick's USB ID, the master opens it as usual, and every command goes to the virtual lamps and sensors.
+
+```
+master software ── "USB stick" (made by dali-sim) ── virtual DALI bus
+```
+
+| `--usb-stick` | Appears as | USB ID |
+|---|---|---|
+| `tridonic` | Tridonic DALI USB | 17B5:0020 |
+| `lunatone` | Lunatone DALI USB (older HID model; same ID and protocol as Tridonic) | 17B5:0020 |
+| `hasseb` | hasseb DALI Master (current firmware protocol) | 04CC:0802 |
+
+Steps, on the Linux machine or Raspberry Pi where the master runs:
+
+```bash
+sudo modprobe uhid                                 # once per boot (or add "uhid" to /etc/modules)
+sudo dali-sim serve office-16 --usb-stick tridonic
+# now start your master software and choose the Tridonic DALI USB as usual
+```
+
+To run without `sudo`, add a udev rule, e.g. `/etc/udev/rules.d/50-dali-sim.rules`, then log out and in:
+
+```
+KERNEL=="uhid", GROUP="plugdev", MODE="0660"
+SUBSYSTEM=="hidraw", KERNELS=="0003:17B5:0020.*", GROUP="plugdev", MODE="0660", SYMLINK+="dali/daliusb"
+SUBSYSTEM=="hidraw", KERNELS=="0003:04CC:0802.*", GROUP="plugdev", MODE="0660", SYMLINK+="dali/hasseb"
+```
+
+Good to know:
+
+- **Linux only** (needs the kernel's `uhid` feature; Raspberry Pi OS and most distributions have it). Not on Windows or macOS.
+- The master and the simulator must run on the **same machine**. With Docker, run the simulator with `--device /dev/uhid`; the new `/dev/hidrawN` appears on the host and can be passed to the master's container with `--device`.
+- Unplug a real stick of the same brand, or the master may pick the real one.
+- The stick protocols come from public open-source drivers. The fake sticks are tested with dali-sim's own stick drivers, not yet with commercial master software. If your master does not see or accept the stick, please open an issue with its name.
