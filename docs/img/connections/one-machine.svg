@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" role="img" aria-label="On one Raspberry Pi, the master software talks to dali-sim through a fake USB stick, a virtual serial port or TCP; dali-sim holds the virtual lamps."><style>
+text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; fill: #16202a; }
+.t-small { font-size: 11.5px; fill: #566573; }
+.t-strong { font-weight: 600; }
+.t-wire { fill: #7a3db8; font-weight: 600; }
+.t-net { fill: #1e66a6; }
+.box { fill: #ffffff; stroke: #16202a; stroke-width: 1.4; }
+.frame { fill: none; stroke: #566573; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.wire { stroke: #7a3db8; stroke-width: 4; fill: none; }
+.net { stroke: #1e66a6; stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.usb { stroke: #16202a; stroke-width: 2; fill: none; }
+.ah-net { fill: #1e66a6; }
+.ah { fill: #16202a; }
+.dot { fill: #7a3db8; }
+.lamp { fill: #f2c94c; stroke: #16202a; stroke-width: 1.2; }
+</style><rect width="760" height="200" rx="12" fill="#f7f9fa"/>
+          <rect class="frame" x="10" y="16" width="740" height="172" rx="10"/>
+          <text x="26" y="38" class="t-small">One Raspberry Pi or Linux computer</text>
+          <rect class="box" x="40" y="70" width="170" height="80" rx="8"/>
+          <text x="125" y="106" text-anchor="middle" class="t-strong">Your DALI master</text>
+          <text x="125" y="124" text-anchor="middle">software</text>
+          <line class="net" x1="216" y1="110" x2="434" y2="110"/>
+          <polygon class="ah-net" points="440,110 430,104 430,116"/>
+          <polygon class="ah-net" points="210,110 220,104 220,116"/>
+          <text x="325" y="98" text-anchor="middle" class="t-net">fake USB stick · virtual serial</text>
+          <text x="325" y="130" text-anchor="middle" class="t-net">daliserver · TCP API</text>
+          <rect class="box" x="440" y="70" width="170" height="80" rx="8"/>
+          <text x="525" y="106" text-anchor="middle" class="t-strong">dali-sim</text>
+          <text x="525" y="124" text-anchor="middle">virtual DALI bus</text>
+          <line x1="610" y1="110" x2="735" y2="110" class="wire" stroke-dasharray="6 5"/>
+          <line x1="650" y1="110" x2="650" y2="90" stroke="#16202a"/><circle class="lamp" cx="650" cy="80" r="10"/>
+          <line x1="690" y1="110" x2="690" y2="90" stroke="#16202a"/><circle class="lamp" cx="690" cy="80" r="10"/>
+          <line x1="728" y1="110" x2="728" y2="90" stroke="#16202a"/><circle class="lamp" cx="728" cy="80" r="10"/>
+          <text x="690" y="140" text-anchor="middle" class="t-small">virtual lamps</text>
+        </svg>

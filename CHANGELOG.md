@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- docs/connections.md: diagrams of every way to connect a DALI master, with status marks (tested, not yet tried, experimental, not built) and a help-wanted list.
+- The gpio adapter spec accepts a pigpiod host (`gpio:tx=17,rx=27,host=...`), for Docker.
 - Fake USB DALI sticks on Linux (`--usb-stick tridonic|lunatone|hasseb`, via `/dev/uhid`): DALI master software that expects one of these sticks talks to the simulator without wires.
 
 ## 0.1.0 (unreleased)

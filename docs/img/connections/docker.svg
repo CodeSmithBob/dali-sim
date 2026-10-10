@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 240" role="img" aria-label="On one Docker host, the dali-sim container and your master's container talk over the Docker network; device files from the host can be passed into the dali-sim container."><style>
+text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; fill: #16202a; }
+.t-small { font-size: 11.5px; fill: #566573; }
+.t-strong { font-weight: 600; }
+.t-wire { fill: #7a3db8; font-weight: 600; }
+.t-net { fill: #1e66a6; }
+.box { fill: #ffffff; stroke: #16202a; stroke-width: 1.4; }
+.frame { fill: none; stroke: #566573; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.wire { stroke: #7a3db8; stroke-width: 4; fill: none; }
+.net { stroke: #1e66a6; stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.usb { stroke: #16202a; stroke-width: 2; fill: none; }
+.ah-net { fill: #1e66a6; }
+.ah { fill: #16202a; }
+.dot { fill: #7a3db8; }
+.lamp { fill: #f2c94c; stroke: #16202a; stroke-width: 1.2; }
+</style><rect width="760" height="240" rx="12" fill="#f7f9fa"/>
+          <rect class="frame" x="10" y="16" width="740" height="214" rx="10"/>
+          <text x="24" y="38" class="t-small">Linux computer or Pi running Docker</text>
+          <rect class="box" x="30" y="56" width="300" height="80" rx="8" stroke-dasharray="4 3"/>
+          <text x="180" y="90" text-anchor="middle" class="t-strong">container: dali-sim</text>
+          <text x="180" y="110" text-anchor="middle">web page :8080</text>
+          <rect class="box" x="500" y="56" width="220" height="80" rx="8" stroke-dasharray="4 3"/>
+          <text x="610" y="90" text-anchor="middle" class="t-strong">container: your master</text>
+          <text x="610" y="110" text-anchor="middle">or your test scripts</text>
+          <line class="net" x1="336" y1="96" x2="494" y2="96"/>
+          <polygon class="ah-net" points="500,96 490,90 490,102"/>
+          <polygon class="ah-net" points="330,96 340,90 340,102"/>
+          <text x="415" y="86" text-anchor="middle" class="t-net">Docker network</text>
+          <text x="415" y="118" text-anchor="middle" class="t-net">TCP 5555 · 55825</text>
+          <rect class="box" x="30" y="180" width="90" height="34" rx="6"/><text x="75" y="202" text-anchor="middle" class="t-small">/dev/uhid</text>
+          <rect class="box" x="130" y="180" width="100" height="34" rx="6"/><text x="180" y="202" text-anchor="middle" class="t-small">/dev/hidraw0</text>
+          <rect class="box" x="240" y="180" width="100" height="34" rx="6"/><text x="290" y="202" text-anchor="middle" class="t-small">/dev/ttyUSB0</text>
+          <line class="usb" x1="75" y1="180" x2="75" y2="144"/><polygon class="ah" points="75,136 69,146 81,146"/>
+          <line class="usb" x1="180" y1="180" x2="180" y2="144"/><polygon class="ah" points="180,136 174,146 186,146"/>
+          <line class="usb" x1="290" y1="180" x2="290" y2="144"/><polygon class="ah" points="290,136 284,146 296,146"/>
+          <text x="360" y="202" class="t-small">passed in with --device</text>
+        </svg>

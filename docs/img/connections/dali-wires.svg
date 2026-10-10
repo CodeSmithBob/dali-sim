@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" role="img" aria-label="Pi A with the master and a USB DALI stick drives the DA plus and DA minus wires, which also carry a 16 volt bus power supply; a listening interface on the same wires feeds dali-sim on Pi B. Commands always arrive; answers go back only with the GPIO board."><style>
+text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; fill: #16202a; }
+.t-small { font-size: 11.5px; fill: #566573; }
+.t-strong { font-weight: 600; }
+.t-wire { fill: #7a3db8; font-weight: 600; }
+.t-net { fill: #1e66a6; }
+.box { fill: #ffffff; stroke: #16202a; stroke-width: 1.4; }
+.frame { fill: none; stroke: #566573; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.wire { stroke: #7a3db8; stroke-width: 4; fill: none; }
+.net { stroke: #1e66a6; stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.usb { stroke: #16202a; stroke-width: 2; fill: none; }
+.ah-net { fill: #1e66a6; }
+.ah { fill: #16202a; }
+.dot { fill: #7a3db8; }
+.lamp { fill: #f2c94c; stroke: #16202a; stroke-width: 1.2; }
+</style><rect width="880" height="250" rx="12" fill="#f7f9fa"/>
+          <rect class="frame" x="10" y="16" width="200" height="140" rx="10"/>
+          <text x="24" y="38" class="t-small">Raspberry Pi A</text>
+          <rect class="box" x="26" y="60" width="168" height="60" rx="8"/>
+          <text x="110" y="86" text-anchor="middle" class="t-strong">DALI master</text>
+          <text x="110" y="104" text-anchor="middle">software</text>
+          <line class="usb" x1="194" y1="90" x2="240" y2="90"/>
+          <text x="217" y="82" text-anchor="middle" class="t-small">USB</text>
+          <rect class="box" x="240" y="60" width="110" height="60" rx="8"/>
+          <text x="295" y="86" text-anchor="middle" class="t-strong">USB DALI</text>
+          <text x="295" y="104" text-anchor="middle">stick</text>
+          <line class="wire" x1="350" y1="78" x2="620" y2="78"/>
+          <line class="wire" x1="350" y1="102" x2="620" y2="102"/>
+          <text x="485" y="70" text-anchor="middle" class="t-wire">DA+</text>
+          <text x="485" y="122" text-anchor="middle" class="t-wire">DA−</text>
+          <text x="485" y="38" text-anchor="middle">commands →</text>
+          <text x="485" y="54" text-anchor="middle" class="t-small">← answers: only with the GPIO board</text>
+          <line class="wire" x1="430" y1="78" x2="430" y2="180" stroke-width="2.5"/>
+          <line class="wire" x1="540" y1="102" x2="540" y2="180" stroke-width="2.5"/>
+          <circle class="dot" cx="430" cy="78" r="5"/><circle class="dot" cx="540" cy="102" r="5"/>
+          <rect class="box" x="410" y="180" width="150" height="54" rx="8"/>
+          <text x="485" y="203" text-anchor="middle" class="t-strong">Bus power supply</text>
+          <text x="485" y="221" text-anchor="middle">16 V, max 250 mA</text>
+          <rect class="box" x="620" y="60" width="110" height="60" rx="8"/>
+          <text x="675" y="86" text-anchor="middle" class="t-strong">listening</text>
+          <text x="675" y="104" text-anchor="middle">interface</text>
+          <rect class="frame" x="746" y="16" width="124" height="140" rx="10"/>
+          <text x="758" y="38" class="t-small">Pi B</text>
+          <line class="usb" x1="730" y1="90" x2="760" y2="90"/>
+          <rect class="box" x="760" y="60" width="100" height="60" rx="8"/>
+          <text x="810" y="86" text-anchor="middle" class="t-strong">dali-sim</text>
+          <text x="810" y="104" text-anchor="middle">virtual lamps</text>
+          <text x="745" y="142" text-anchor="middle" class="t-small">USB or GPIO</text>
+        </svg>

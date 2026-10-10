@@ -19,6 +19,12 @@ Use it to:
 |---|---|---|
 | ![Bus monitor](docs/img/monitor.png) | ![Commissioning](docs/img/commissioning.png) | ![Test bench](docs/img/testbench.png) |
 
+## How to connect
+
+**[docs/connections.md](docs/connections.md)** shows every way a DALI master can talk to the simulator (one machine, network, real DA+/DA− wires, Raspberry Pi wiring, Docker) with diagrams, and marks what is done, what is not yet tested, and where help is wanted.
+
+![A DALI master on Pi A drives the DALI wires; a listening interface on Pi B feeds dali-sim](docs/img/connections/dali-wires.svg)
+
 ## What is simulated
 
 | Area | Coverage |

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" role="img" aria-label="Raspberry Pi A runs the master, Raspberry Pi B runs dali-sim; they talk over Ethernet or Wi-Fi using TCP port 5555 or the daliserver port 55825."><style>
+text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; fill: #16202a; }
+.t-small { font-size: 11.5px; fill: #566573; }
+.t-strong { font-weight: 600; }
+.t-wire { fill: #7a3db8; font-weight: 600; }
+.t-net { fill: #1e66a6; }
+.box { fill: #ffffff; stroke: #16202a; stroke-width: 1.4; }
+.frame { fill: none; stroke: #566573; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.wire { stroke: #7a3db8; stroke-width: 4; fill: none; }
+.net { stroke: #1e66a6; stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.usb { stroke: #16202a; stroke-width: 2; fill: none; }
+.ah-net { fill: #1e66a6; }
+.ah { fill: #16202a; }
+.dot { fill: #7a3db8; }
+.lamp { fill: #f2c94c; stroke: #16202a; stroke-width: 1.2; }
+</style><rect width="760" height="160" rx="12" fill="#f7f9fa"/>
+          <rect class="frame" x="10" y="16" width="250" height="130" rx="10"/>
+          <text x="24" y="38" class="t-small">Raspberry Pi A</text>
+          <rect class="box" x="30" y="56" width="210" height="70" rx="8"/>
+          <text x="135" y="88" text-anchor="middle" class="t-strong">Your DALI master</text>
+          <text x="135" y="106" text-anchor="middle">software</text>
+          <rect class="frame" x="500" y="16" width="250" height="130" rx="10"/>
+          <text x="514" y="38" class="t-small">Raspberry Pi B</text>
+          <rect class="box" x="520" y="56" width="210" height="70" rx="8"/>
+          <text x="625" y="88" text-anchor="middle" class="t-strong">dali-sim</text>
+          <text x="625" y="106" text-anchor="middle">virtual DALI bus</text>
+          <line class="net" x1="246" y1="91" x2="514" y2="91"/>
+          <polygon class="ah-net" points="520,91 510,85 510,97"/>
+          <polygon class="ah-net" points="240,91 250,85 250,97"/>
+          <text x="380" y="80" text-anchor="middle" class="t-net">Ethernet or Wi-Fi</text>
+          <text x="380" y="112" text-anchor="middle" class="t-net">TCP 5555 or daliserver 55825</text>
+        </svg>

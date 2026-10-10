@@ -1,5 +1,7 @@
 # Hardware and bridges
 
+For pictures of every setup and the state of each part, start with [connections.md](connections.md).
+
 ## How the pieces connect
 
 ```

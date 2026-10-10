@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 170" role="img" aria-label="dali-sim on a Raspberry Pi uses any USB stick or HAT to send commands over the DALI wires to real lamps and sensors."><style>
+text { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; fill: #16202a; }
+.t-small { font-size: 11.5px; fill: #566573; }
+.t-strong { font-weight: 600; }
+.t-wire { fill: #7a3db8; font-weight: 600; }
+.t-net { fill: #1e66a6; }
+.box { fill: #ffffff; stroke: #16202a; stroke-width: 1.4; }
+.frame { fill: none; stroke: #566573; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.wire { stroke: #7a3db8; stroke-width: 4; fill: none; }
+.net { stroke: #1e66a6; stroke-width: 2; stroke-dasharray: 6 4; fill: none; }
+.usb { stroke: #16202a; stroke-width: 2; fill: none; }
+.ah-net { fill: #1e66a6; }
+.ah { fill: #16202a; }
+.dot { fill: #7a3db8; }
+.lamp { fill: #f2c94c; stroke: #16202a; stroke-width: 1.2; }
+</style><rect width="760" height="170" rx="12" fill="#f7f9fa"/>
+          <rect class="frame" x="10" y="16" width="200" height="130" rx="10"/>
+          <text x="24" y="38" class="t-small">Raspberry Pi</text>
+          <rect class="box" x="26" y="56" width="168" height="60" rx="8"/>
+          <text x="110" y="82" text-anchor="middle" class="t-strong">dali-sim</text>
+          <text x="110" y="100" text-anchor="middle">as the master</text>
+          <line class="usb" x1="194" y1="86" x2="240" y2="86"/>
+          <rect class="box" x="240" y="56" width="120" height="60" rx="8"/>
+          <text x="300" y="82" text-anchor="middle" class="t-strong">any stick</text>
+          <text x="300" y="100" text-anchor="middle">or HAT</text>
+          <line class="wire" x1="360" y1="74" x2="740" y2="74"/>
+          <line class="wire" x1="360" y1="98" x2="740" y2="98"/>
+          <line x1="450" y1="98" x2="450" y2="118" stroke="#16202a"/><circle class="lamp" cx="450" cy="130" r="12"/>
+          <line x1="530" y1="98" x2="530" y2="118" stroke="#16202a"/><circle class="lamp" cx="530" cy="130" r="12"/>
+          <line x1="610" y1="98" x2="610" y2="118" stroke="#16202a"/><circle class="lamp" cx="610" cy="130" r="12"/>
+          <line x1="690" y1="98" x2="690" y2="118" stroke="#16202a"/><rect class="box" x="678" y="118" width="24" height="24" rx="4"/>
+          <text x="530" y="162" text-anchor="middle" class="t-small">real lamps</text>
+          <text x="690" y="162" text-anchor="middle" class="t-small">real sensor</text>
+          <text x="550" y="66" text-anchor="middle" class="t-wire">DA+ / DA−</text>
+        </svg>
