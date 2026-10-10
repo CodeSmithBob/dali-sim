@@ -168,3 +168,12 @@ table.results td, table.results th { padding: 4px 8px; border-bottom: 1px solid 
   .amap { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .form { grid-template-columns: 1fr; }
 }
+
+/* DALI line selector (multi-line buildings) */
+.linebar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 16px;
+  background: var(--panel-2); border-bottom: 1px solid var(--line); }
+.lines { display: flex; flex-wrap: wrap; gap: 6px; }
+.line { display: grid; gap: 1px; text-align: left; padding: 5px 10px; background: var(--panel); }
+.line .lname { font-weight: 600; font-size: 13px; }
+.line .lstats { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.line.active { border-color: var(--accent); box-shadow: inset 0 -3px 0 var(--accent); }

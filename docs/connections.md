@@ -112,6 +112,22 @@ dali-sim serve office-16 --adapter tridonic --bridge-mode controller
 | Docker Desktop on Windows or macOS | network only: TCP 5555 and daliserver | ✅ network / ❌ USB, fake sticks and GPIO |
 | Ready-made image on a registry (`docker pull`) | | 🛠 the image is only built locally today; a published multi-arch image (amd64 + arm64 for the Pi) is welcome |
 
+## Masters with several DALI outputs
+
+DALI allows 64 lights per line, so bigger installations use several lines, and many masters and gateways have 2, 4 or more DALI outputs. One simulator can run several lines (`lines:` in the configuration, see [configuration.md](configuration.md#several-dali-lines)). Each line gets its own connection, so each output of your master maps to one line:
+
+```bash
+sudo dali-sim serve three-lines --usb-stick tridonic,tridonic,tridonic   # one fake stick per line
+dali-sim serve three-lines --host 0.0.0.0 --daliserver-port 55825      # TCP 5555-5557, daliserver 55825-55827
+```
+
+| What | Status |
+|---|---|
+| Several lines in one simulator, one web page, one container | ✅ |
+| TCP, daliserver and virtual serial ports per line | ✅ |
+| One fake USB stick per line, each with its own serial number | 🟡 like single fake sticks: not yet tried on a real `/dev/uhid` |
+| Real DALI wires: one listening interface per line (`--adapter tridonic@2`) | 🟡 / 🧪 as in setup 3 |
+
 ## 6. Tridonic, Lunatone, hasseb, AtxLED: what they are
 
 These companies make the small box between a computer and the DALI wires. A master program is written for one of them. The simulator works with each in two ways: it can **pretend to be** the box (no wires), or it can **use** a real box on real wires.

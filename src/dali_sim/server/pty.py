@@ -50,6 +50,12 @@ class PtyServer:
         asyncio.get_running_loop().add_reader(master, self._readable)
         return self.link or self.slave_name
 
+    def rebind(self, sim: Simulator) -> None:
+        """Follow another simulator (the scenario was replaced)."""
+        self.sim = sim
+        if self.emulator:
+            self.emulator.rebind(sim.bus)
+
     async def stop(self) -> None:
         if self.emulator:
             self.emulator.stop()

@@ -11,8 +11,9 @@ from typing import Any
 import yaml
 
 from .automation import AutomationController
+from .building import Building
 from .bus import Bus, Faults
-from .clock import ManualClock, RealtimeClock
+from .clock import Clock, ManualClock, RealtimeClock
 from .devices.control_device import ControlDevice
 from .devices.instances import AbsoluteInput, Instance, LightSensor, OccupancySensor, PushButton
 from .gear.colour import ColourExtension
@@ -28,8 +29,55 @@ class ConfigError(ValueError):
 
 
 def load(path: str | Path, *, manual_clock: bool = False) -> Simulator:
+    """Load a single-line configuration.  Use :func:`load_building` for files
+    that may contain several lines."""
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
+    if "lines" in data:
+        raise ConfigError(f"{path} describes several DALI lines; load it with load_building()")
     return build(data, manual_clock=manual_clock)
+
+
+#: Top-level keys a line inherits from the building file unless it sets them.
+_INHERITED = ("speed", "commissioned", "initial_level", "world", "bus")
+
+
+def load_building(path: str | Path, *, manual_clock: bool = False) -> Building:
+    """Load a configuration with one line, or several under ``lines:``."""
+    path = Path(path)
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return build_building(data, base_dir=path.parent, manual_clock=manual_clock)
+
+
+def build_building(data: dict[str, Any], *, base_dir: Path | None = None, manual_clock: bool = False) -> Building:
+    if "lines" not in data:
+        sim = build(data, manual_clock=manual_clock)
+        return Building([sim], sim.name, sim.description)
+    specs = data.get("lines") or []
+    if not specs:
+        raise ConfigError("'lines:' is empty")
+    # Real-time lines share one clock so the speed control applies to all.
+    clock = None if manual_clock else RealtimeClock(float(data.get("speed", 1.0)))
+    seed = data.get("seed")
+    lines = []
+    for i, spec in enumerate(specs, 1):
+        spec = dict(spec or {})
+        line: dict[str, Any] = {}
+        if "file" in spec:
+            f = Path(spec.pop("file"))
+            if not f.is_absolute():
+                f = (base_dir or Path.cwd()) / f
+            line = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            if "lines" in line:
+                raise ConfigError(f"line {i}: {f} has lines of its own")
+        line.update(spec)
+        for key in _INHERITED:
+            if key not in line and key in data:
+                line[key] = data[key]
+        line.setdefault("name", f"Line {i}")
+        if "seed" not in spec and seed is not None:
+            line["seed"] = int(seed) * 100 + i
+        lines.append(build(line, manual_clock=manual_clock, clock=clock))
+    return Building(lines, str(data.get("name", "")), str(data.get("description", "")))
 
 
 def _expand(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -138,11 +186,12 @@ def make_device(spec: dict[str, Any], seed: int | None) -> ControlDevice:
     return d
 
 
-def build(data: dict[str, Any], *, manual_clock: bool = False) -> Simulator:
+def build(data: dict[str, Any], *, manual_clock: bool = False, clock: Clock | None = None) -> Simulator:
     seed = data.get("seed")
     bus_cfg = data.get("bus", {}) or {}
     faults = Faults(**(bus_cfg.get("faults") or {}), seed=seed)
-    clock = ManualClock() if manual_clock else RealtimeClock(float(data.get("speed", 1.0)))
+    if clock is None:
+        clock = ManualClock() if manual_clock else RealtimeClock(float(data.get("speed", 1.0)))
     bus = Bus(clock, name=str(bus_cfg.get("name", "bus0")), faults=faults)
     wcfg = data.get("world", {}) or {}
     world = World(outdoor_lux=float(wcfg.get("outdoor_lux", 10000)), people=bool(wcfg.get("people", False)),

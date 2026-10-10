@@ -1,0 +1,15 @@
+# A building served by a master with three DALI outputs: three separate DALI
+# lines of 64 control gear and 16 control devices each (192 lights in total).
+# Each line has its own TCP port (5555, 5556, 5557), daliserver port and fake
+# USB stick, e.g.:
+#   dali-sim serve three-lines --usb-stick tridonic,tridonic,tridonic
+name: Three-line building (3 × 64 lights)
+description: >
+  Three DALI lines, one per floor. Frames on one line never reach another,
+  just like real DALI lines. Pick a line at the top of the page.
+seed: 3
+speed: 1.0
+lines:
+  - {file: building-64.yaml, name: Ground floor}
+  - {file: building-64.yaml, name: First floor}
+  - {file: building-64.yaml, name: Second floor}

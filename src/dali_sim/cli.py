@@ -35,14 +35,29 @@ def _resolve_config(name: str | None) -> Path | None:
     raise SystemExit(f"config not found: {name}")
 
 
-def _load(name: str | None, manual: bool = False, speed: float | None = None):
-    from .config import build, load
+def _load_building(name: str | None, manual: bool = False, speed: float | None = None):
+    from .building import Building
+    from .config import build, load_building
 
     path = _resolve_config(name)
-    sim = load(path, manual_clock=manual) if path else build({"name": "Empty bus"}, manual_clock=manual)
+    building = load_building(path, manual_clock=manual) if path else Building([build({"name": "Empty bus"},
+                                                                                       manual_clock=manual)])
     if speed is not None and not manual:
-        sim.speed = speed
-    return sim
+        building.lines[0].speed = speed  # the lines share one clock
+    return building
+
+
+def _load(name: str | None, manual: bool = False, speed: float | None = None, line: int | None = None):
+    """One line of a configuration (line 1 unless given)."""
+    return _load_building(name, manual, speed).line(line)
+
+
+def _split_line(spec: str) -> tuple[str, int]:
+    """``SPEC@N`` -> (SPEC, N); no suffix means line 1."""
+    base, sep, n = spec.rpartition("@")
+    if sep and n.isdigit():
+        return base, int(n)
+    return spec, 1
 
 
 # ---------------------------------------------------------------------------
@@ -50,80 +65,118 @@ async def cmd_serve(args: argparse.Namespace) -> None:
     from aiohttp import web
 
     from .bridge import Bridge
-    from .config import load
+    from .config import load_building
     from .server.tcp import TcpServer
     from .server.web import WebApp
 
-    sim = _load(args.config, speed=args.speed)
+    building = _load_building(args.config, speed=args.speed)
+    n_lines = len(building)
     for spec in args.adapter or []:
         from .adapters import create
 
+        spec, line = _split_line(spec)
+        sim = building.line(line)
         sim.bridges.append(Bridge(sim, create(spec), mode=args.bridge_mode))
-    tcp = None
-    if args.tcp_port:
-        tcp = TcpServer(sim, args.host, args.tcp_port)
 
-    async def start_pty() -> None:
+    # Every server below belongs to one line; after a scenario change in the
+    # web UI it is pointed at the new simulator of that line.
+    per_line: list[tuple[int, object]] = []
+    tcps = []
+    if args.tcp_port:
+        for n in range(1, n_lines + 1):
+            tcp = TcpServer(building.line(n), args.host, args.tcp_port + n - 1,
+                            lines=lambda: current["building"].lines, line=n)
+            tcps.append(tcp)
+            per_line.append((n, tcp))
+    current = {"building": building}
+    lines_out: list[str] = []
+
+    async def start_line_servers() -> None:
+        for tcp in tcps:
+            await tcp.start()
         if args.pty:
             from .server.pty import PtyServer
 
-            path = await PtyServer(sim, args.pty, protocol=args.pty_protocol).start()
-            print(f"  serial   {path} ({args.pty_protocol} protocol)")
+            for n in range(1, n_lines + 1):
+                link = args.pty if n == 1 else f"{args.pty}{n}"
+                pty = PtyServer(building.line(n), link, protocol=args.pty_protocol)
+                path = await pty.start()
+                per_line.append((n, pty))
+                lines_out.append(f"  serial   line {n}: {path} ({args.pty_protocol} protocol)")
         if args.daliserver_port:
             from .server.daliserver import DaliServerProtocolServer
 
-            ds = DaliServerProtocolServer(sim, args.host, args.daliserver_port)
-            await ds.start()
-            print(f"  daliserv {args.host}:{ds.port} (daliserver protocol)")
-        for kind in args.usb_stick or []:
-            from .server.uhid import FakeUsbStick
+            for n in range(1, n_lines + 1):
+                ds = DaliServerProtocolServer(building.line(n), args.host, args.daliserver_port + n - 1)
+                await ds.start()
+                per_line.append((n, ds))
+                lines_out.append(f"  daliserv line {n}: {args.host}:{ds.port} (daliserver protocol)")
+        for value in args.usb_stick or []:
+            from .server.uhid import STICKS, FakeUsbStick
 
-            stick = FakeUsbStick(sim, kind)
-            try:
-                await stick.start()
-            except RuntimeError as exc:
-                print(f"  usb      fake {kind} stick NOT started: {exc}")
-                continue
-            await asyncio.sleep(0.3)  # let the kernel create the hidraw node
-            nodes = ", ".join(stick.hidraw_paths()) or "see /dev/hidraw*"
-            print(f"  usb      fake {kind} stick {stick.model.vid:04x}:{stick.model.pid:04x} at {nodes}")
+            for n, kind in enumerate(value.split(","), 1):
+                kind = kind.strip().lower()
+                if kind in ("", "-", "none"):
+                    continue
+                if kind not in STICKS:
+                    raise SystemExit(f"unknown stick {kind!r}; choose from {', '.join(STICKS)}")
+                if n > n_lines:
+                    raise SystemExit(f"--usb-stick {value}: there is no line {n}")
+                stick = FakeUsbStick(building.line(n), kind, line=n)
+                try:
+                    await stick.start()
+                except RuntimeError as exc:
+                    lines_out.append(f"  usb      line {n}: fake {kind} stick NOT started: {exc}")
+                    continue
+                per_line.append((n, stick))
+                await asyncio.sleep(0.3)  # let the kernel create the hidraw node
+                nodes = ", ".join(stick.hidraw_paths()) or "see /dev/hidraw*"
+                lines_out.append(f"  usb      line {n}: fake {kind} stick {stick.model.vid:04x}:{stick.model.pid:04x}"
+                                 f" serial {stick.serial:08X} at {nodes}")
+
+    def rebind(new) -> None:
+        current["building"] = new
+        for n, server in per_line:
+            sim = new.line(n)
+            if hasattr(server, "rebind"):
+                server.rebind(sim)
+            else:
+                server.sim = sim
+
+    def banner() -> None:
+        names = ", ".join(f"line {i}: {s.name!r} ({len(s.gear)} gear, {len(s.devices)} devices)"
+                          for i, s in enumerate(building.lines, 1))
+        print(f"dali-sim {__version__}: {building.name!r} with {n_lines} DALI line(s)")
+        print(f"  lines    {names}")
+        shown = "localhost" if args.host in ("0.0.0.0", "::") else args.host
+        if not args.no_web:
+            print(f"  web UI   http://{shown}:{args.port}/")
+        for tcp in tcps:
+            print(f"  TCP API  line {tcp.line}: {shown}:{tcp.port} (JSON lines)")
+        for n, sim in enumerate(building.lines, 1):
+            for br in sim.bridges:
+                print(f"  bridge   line {n}: {br.adapter.name} ({br.mode})" + (f"  ERROR: {br.error}" if br.error else ""))
+        for text in lines_out:
+            print(text)
 
     if args.no_web:
-        await sim.start()
-        if tcp:
-            await tcp.start()
-            print(f"TCP API on {args.host}:{tcp.port}")
-        await start_pty()
-        print(f"Simulating {sim.name!r}: {len(sim.gear)} gear, {len(sim.devices)} devices. Ctrl+C to stop.")
+        await building.start()
+        await start_line_servers()
+        banner()
+        print("Ctrl+C to stop.")
         try:
             await asyncio.Event().wait()
         finally:
-            await sim.stop()
+            await building.stop()
         return
-    webapp = WebApp(sim, examples_dir=_examples_dir(), loader=lambda p: load(p))
+    webapp = WebApp(building, examples_dir=_examples_dir(), loader=lambda p: load_building(p))
+    webapp.on_reload.append(rebind)
     runner = web.AppRunner(webapp.app)
     await runner.setup()
     site = web.TCPSite(runner, args.host, args.port)
     await site.start()
-    if tcp:
-        # The TCP server must follow scenario changes made in the web UI.
-        tcp.sim = webapp.sim
-        await tcp.start()
-
-        async def follow() -> None:
-            while True:
-                tcp.sim = webapp.sim
-                await asyncio.sleep(0.5)
-
-        asyncio.create_task(follow())
-    shown = "localhost" if args.host in ("0.0.0.0", "::") else args.host
-    print(f"dali-sim {__version__}: {sim.name!r} with {len(sim.gear)} gear and {len(sim.devices)} devices")
-    print(f"  web UI   http://{shown}:{args.port}/")
-    if tcp:
-        print(f"  TCP API  {shown}:{tcp.port} (JSON lines)")
-    for br in sim.bridges:
-        print(f"  bridge   {br.adapter.name} ({br.mode})" + (f"  ERROR: {br.error}" if br.error else ""))
-    await start_pty()
+    await start_line_servers()
+    banner()
     try:
         await asyncio.Event().wait()
     finally:
@@ -248,7 +301,7 @@ async def _transport(args: argparse.Namespace):
         adapter = create(args.adapter)
         await adapter.open()
         return adapter, adapter.close
-    sim = _load(getattr(args, "config", None), manual=True)
+    sim = _load(getattr(args, "config", None), manual=True, line=getattr(args, "line", None))
     sim.world.start(sim)
 
     async def noop() -> None:
@@ -318,19 +371,22 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("config", nargs="?", default="office-16", help="YAML file or example name (default office-16)")
     s.add_argument("--host", default="127.0.0.1", help="bind address (use 0.0.0.0 in Docker)")
     s.add_argument("--port", type=int, default=8080, help="web UI port")
-    s.add_argument("--tcp-port", type=int, default=5555, help="JSON-lines TCP API port (0 = off)")
+    s.add_argument("--tcp-port", type=int, default=5555,
+                   help="JSON-lines TCP API port of line 1; line N uses PORT+N-1 (0 = off)")
     s.add_argument("--speed", type=float, default=None, help="simulation speed factor")
-    s.add_argument("--adapter", action="append", help="hardware adapter spec, e.g. hasseb or serial:/dev/ttyUSB0")
+    s.add_argument("--adapter", action="append",
+                   help="hardware adapter spec, e.g. hasseb or serial:/dev/ttyUSB0; add @N for line N (default line 1)")
     s.add_argument("--bridge-mode", default="controller", choices=["controller", "devices", "hybrid"])
     s.add_argument("--no-web", action="store_true", help="no web UI, only the TCP API")
     s.add_argument("--pty", nargs="?", const="/tmp/dali-sim-tty", default=None, metavar="LINK",
                    help="also offer a virtual serial port, default link /tmp/dali-sim-tty")
     s.add_argument("--pty-protocol", default="dalisim", choices=["dalisim", "atxled", "luba"],
                    help="protocol on the virtual serial port: dali-sim line protocol, AtxLED HAT or Lunatone LUBA")
-    s.add_argument("--usb-stick", action="append", choices=["tridonic", "lunatone", "hasseb"], metavar="KIND",
-                   help="appear as a USB DALI stick (tridonic, lunatone or hasseb) via Linux /dev/uhid; repeatable")
+    s.add_argument("--usb-stick", action="append", metavar="KIND[,KIND...]",
+                   help="appear as USB DALI stick(s) via Linux /dev/uhid: tridonic, lunatone or hasseb; "
+                        "a comma list gives one stick per line, e.g. tridonic,tridonic,tridonic")
     s.add_argument("--daliserver-port", type=int, default=0, metavar="PORT",
-                   help="also serve the daliserver TCP protocol (usually 55825)")
+                   help="also serve the daliserver TCP protocol (usually 55825); line N uses PORT+N-1")
     s.set_defaults(func=cmd_serve, is_async=True)
 
     for name, fn, hlp in (("commission", cmd_commission, "give short addresses (binary search)"),
@@ -339,6 +395,7 @@ def build_parser() -> argparse.ArgumentParser:
         s = sub.add_parser(name, help=hlp)
         s.add_argument("config", nargs="?", help="YAML file or example name (virtual bus)")
         s.add_argument("--adapter", help="use real hardware instead of a virtual bus")
+        s.add_argument("--line", type=int, default=None, help="which line of a multi-line config (default 1)")
         if name == "commission":
             s.add_argument("--what", choices=["gear", "devices", "all"], default="all")
             s.add_argument("--readdress", action="store_true", help="also re-address units that have an address")
@@ -356,6 +413,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--config", help="YAML file or example name (virtual bus)")
     s.add_argument("--adapter", help="hardware adapter or remote:HOST:PORT")
     s.add_argument("--twice", action="store_true", help="send the last frame twice")
+    s.add_argument("--line", type=int, default=None, help="which line of a multi-line config (default 1)")
     s.set_defaults(func=cmd_send, is_async=True)
 
     s = sub.add_parser("sniff", help="print the traffic seen by an adapter")

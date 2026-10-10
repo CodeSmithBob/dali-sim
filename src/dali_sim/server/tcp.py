@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from .. import __version__
@@ -49,8 +50,12 @@ def parse_frame(text: str) -> Frame:
 
 
 class TcpServer:
-    def __init__(self, sim: Simulator, host: str = "0.0.0.0", port: int = 5555) -> None:
+    def __init__(self, sim: Simulator, host: str = "0.0.0.0", port: int = 5555,
+                 lines: Callable[[], list[Simulator]] | None = None, line: int = 1) -> None:
         self.sim = sim
+        #: all lines of the building, for requests that carry a "line" field
+        self.lines = lines
+        self.line = line
         self.host = host
         self.port = port
         self._server: asyncio.base_events.Server | None = None
@@ -69,7 +74,7 @@ class TcpServer:
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         self.clients += 1
         queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=10000)
-        subscribed = False
+        subscribed = None  # the bus this connection is subscribed to
 
         def on_record(rec: BusRecord) -> None:
             try:
@@ -95,9 +100,9 @@ class TcpServer:
                 try:
                     req = json.loads(line)
                     resp = await self._dispatch(req)
-                    if req.get("op") == "subscribe" and not subscribed:
-                        subscribed = True
-                        self.sim.bus.listeners.append(on_record)
+                    if req.get("op") == "subscribe" and subscribed is None:
+                        subscribed = self._sim_for(req).bus
+                        subscribed.listeners.append(on_record)
                 except Exception as exc:  # report and keep the connection
                     req = req if isinstance(req, dict) else {}
                     resp = {"ok": False, "error": str(exc)}
@@ -105,25 +110,35 @@ class TcpServer:
                     resp["id"] = req["id"]
                 await queue.put(resp)
         finally:
-            if subscribed:
+            if subscribed is not None:
                 try:
-                    self.sim.bus.listeners.remove(on_record)
+                    subscribed.listeners.remove(on_record)
                 except ValueError:
                     pass
             pump_task.cancel()
             writer.close()
             self.clients -= 1
 
+    def _sim_for(self, req: dict[str, Any]) -> Simulator:
+        if req.get("line") in (None, ""):
+            return self.sim
+        lines = self.lines() if self.lines else [self.sim]
+        n = int(req["line"])
+        if not 1 <= n <= len(lines):
+            raise ValueError(f"no line {n}: {len(lines)} line(s)")
+        return lines[n - 1]
+
     async def _dispatch(self, req: dict[str, Any]) -> dict[str, Any]:
         op = req.get("op")
+        sim = self._sim_for(req)
         if op == "hello":
             return {"ok": True, "server": "dali-sim", "version": __version__, "protocol": PROTOCOL_VERSION,
-                    "name": self.sim.name}
+                    "name": sim.name, "line": self.line, "lines": len(self.lines()) if self.lines else 1}
         if op == "send":
             frames = [parse_frame(f) for f in req.get("frames", [])]
             if not frames:
                 raise ValueError("no frames")
-            reply = await self.sim.bus.send(frames, source=str(req.get("source", "tcp")),
+            reply = await sim.bus.send(frames, source=str(req.get("source", "tcp")),
                                             priority=int(req.get("priority", 3)),
                                             expect_answer=req.get("expect_answer"))
             out = {"ok": True, "status": reply.status, "responders": reply.responders}
@@ -133,8 +148,8 @@ class TcpServer:
         if op == "subscribe":
             return {"ok": True, "subscribed": True}
         if op == "snapshot":
-            return {"ok": True, "snapshot": self.sim.snapshot()}
+            return {"ok": True, "snapshot": sim.snapshot()}
         if op == "act":
-            args = {k: v for k, v in req.items() if k not in ("op", "id", "action")}
-            return self.sim.act(req["action"], **args)
+            args = {k: v for k, v in req.items() if k not in ("op", "id", "action", "line")}
+            return sim.act(req["action"], **args)
         raise ValueError(f"unknown op {op!r}")

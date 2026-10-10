@@ -74,6 +74,9 @@ docker run --rm -p 8080:8080 dali-sim serve floor-32 --host 0.0.0.0
 | `commissioning-64.yaml` | 64 gear and 16 devices straight from the factory (no addresses) to practise addressing |
 | `colour-lab.yaml` | DT8: tunable white, RGBW, RGBWAF and xy gear |
 | `emergency.yaml` | DT1 emergency luminaires running at 10x speed |
+| `three-lines.yaml` | A building with **3 DALI lines** (3 × 64 lights) for a master with three DALI outputs |
+
+**More than 64 lights?** DALI allows 64 control gear (and 64 control devices) per line, so bigger installations use several lines. One simulator can run several lines side by side, with one web page and one container. Each line gets its own TCP port, daliserver port, virtual serial port or fake USB stick. See [docs/configuration.md](docs/configuration.md#several-dali-lines).
 
 ## Command line
 

@@ -53,6 +53,15 @@ class SerialEmulator:
         except ValueError:
             pass
 
+    def rebind(self, bus: Bus) -> None:
+        """Follow another bus (the scenario was replaced)."""
+        try:
+            self.bus.listeners.remove(self._record)
+        except ValueError:
+            pass
+        self.bus = bus
+        bus.listeners.append(self._record)
+
     def feed(self, data: bytes) -> None:
         self._queue.put_nowait(data)
 
@@ -251,6 +260,10 @@ class HidEmulator:
         if self.on_report:
             self.on_report(data)
 
+    def rebind(self, bus: Bus) -> None:
+        """Follow another bus (the scenario was replaced)."""
+        self.bus = bus
+
     async def handle(self, data: bytes) -> None:  # pragma: no cover - interface
         raise NotImplementedError
 
@@ -279,8 +292,17 @@ class HassebEmulator(HidEmulator):
 
 
 class TridonicEmulator(HidEmulator):
-    def __init__(self, bus: Bus) -> None:
+    def __init__(self, bus: Bus, serial: int = 0x12345678) -> None:
         super().__init__(bus)
+        self.serial = serial & 0xFFFFFFFF
+        bus.listeners.append(self._record)
+
+    def rebind(self, bus: Bus) -> None:
+        try:
+            self.bus.listeners.remove(self._record)
+        except ValueError:
+            pass
+        super().rebind(bus)
         bus.listeners.append(self._record)
 
     def _rep(self, origin: int, typ: int, frame4: bytes, seq: int) -> None:
@@ -304,7 +326,7 @@ class TridonicEmulator(HidEmulator):
             if data[1] == 0x00:
                 self.report(bytes([T.ORIGIN_INFO, 0, 0, 1, 7]) + bytes(59))
             else:
-                self.report(bytes([T.ORIGIN_INFO, 0x12, 0x34, 0x56, 0x78]) + bytes(59))
+                self.report(bytes([T.ORIGIN_INFO]) + self.serial.to_bytes(4, "big") + bytes(59))
             return
         if cmd != T.CMD_SEND:
             return

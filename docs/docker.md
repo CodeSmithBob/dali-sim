@@ -29,6 +29,13 @@ docker run --rm --device /dev/ttyUSB0 -p 8080:8080 dali-sim \
 
 The container runs as user `dali` (uid 1000). The device node must be readable and writable for that user: add a udev rule, or run with `--group-add` and the device's group id.
 
-## Many buses
+## Several DALI lines
 
-Run one container per bus, each on its own ports. A building with several DALI lines is several simulators. Your controller connects to each one's TCP API.
+One container can simulate several lines (see "Several DALI lines" in [configuration.md](configuration.md#several-dali-lines)). Publish one port per line:
+
+```bash
+docker run --rm -p 8080:8080 -p 5555-5557:5555-5557 -p 55825-55827:55825-55827 dali-sim \
+  serve three-lines --host 0.0.0.0 --daliserver-port 55825
+```
+
+For one fake USB stick per line: `--user root --device /dev/uhid ... --usb-stick tridonic,tridonic,tridonic`.

@@ -18,6 +18,8 @@ One JSON object per line in each direction. A request may carry an `id`; the res
 
 `status` is `answer`, `none` or `framing_error`. Errors: `{"ok":false,"error":"..."}`.
 
+With several DALI lines, each line has its own port (line N on the base port + N − 1), and any request may also carry `"line": N` to address another line. `hello` answers with the port's own `line` and the number of `lines`.
+
 Example in Python without dali-sim installed:
 
 ```python
@@ -48,7 +50,7 @@ Another dali-sim can use this API as an adapter: `--adapter remote:HOST:5555`.
 | `POST /api/testbench` | `{"suite":"gear","addresses":[0,1]}` | starts the test bench |
 | `POST /api/job/cancel` | | cancels the running job |
 
-`via` is `virtual` or the name of a hardware adapter with a running bridge.
+`via` is `virtual` or the name of a hardware adapter with a running bridge. Every request takes an optional `line` (1-based, default 1), in the body or, for GET requests, in the query string (`/api/state?line=2`). `GET /api/lines` lists the lines with their unit counts, lamps on and power.
 
 `/api/command` kinds: `gear` (with optional `dt` for device type commands and `dapc: true` for a level), `gear_special` (`data`), `device` (`instance`: `device`, `all` or a number), `device_special` (`data`). Configuration commands are sent twice automatically; override that with `"twice": false`.
 
@@ -60,7 +62,7 @@ Another dali-sim can use this API as an adapter: `--adapter remote:HOST:5555`.
 
 The server sends:
 
-- `{"type":"hello","history":[...],"state":{...}}` once;
+- `{"type":"hello","line":1,"lines":[...],"history":[...],"state":{...}}` once, and again after the client switches lines with `{"type":"select","line":2}` (or connects to `/ws?line=2`);
 - `{"type":"state","state":{...},"records":[...]}` about 8 times per second;
 - `{"type":"progress",...}` during commissioning, scans and the test bench;
 - `{"type":"job","name":...,"done":true,"result":...}` when a job ends.

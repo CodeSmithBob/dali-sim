@@ -22,9 +22,11 @@ EXAMPLES = Path(__file__).parent.parent / "examples"
 
 @pytest.mark.parametrize("path", sorted(EXAMPLES.glob("*.yaml")), ids=lambda p: p.stem)
 def test_examples_load(path):
-    sim = load(path, manual_clock=True)
-    assert sim.gear or sim.devices
-    sim.snapshot()
+    from dali_sim.config import load_building
+
+    for sim in load_building(path, manual_clock=True).lines:
+        assert sim.gear or sim.devices
+        sim.snapshot()
 
 
 async def test_testbench_passes_on_office():

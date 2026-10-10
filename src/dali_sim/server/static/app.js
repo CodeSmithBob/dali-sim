@@ -21,12 +21,16 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 
 let state = null;
+let currentLine = 1;
+try { currentLine = parseInt(localStorage.getItem("dali-sim-line") || "1", 10) || 1; } catch (e) { /* storage may be blocked */ }
+let lineSwitched = true;
 let catalog = null;
 let selected = null; // {kind: 'gear'|'device', name}
 const monitor = { rows: [], paused: false, selected: null, max: 3000 };
 
 /* ---------------- networking ---------------- */
 async function api(path, body) {
+  if (body && typeof body === "object" && !Array.isArray(body) && body.line === undefined) body = { ...body, line: currentLine };
   const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
   const r = await fetch(path, opts);
   const j = await r.json();
@@ -41,27 +45,69 @@ function toast(text, err = false) {
 const act = (action, args = {}) => api("/api/act", { action, ...args }).catch(e => toast(e.message, true));
 
 let ws = null;
+/* ---------------- lines ---------------- */
+function selectLine(n) {
+  if (n === currentLine) return;
+  currentLine = n;
+  lineSwitched = true;
+  selected = null;
+  $("#details").innerHTML = "<h2>Details</h2><p class='muted'>Select a lamp or a device.</p>";
+  try { localStorage.setItem("dali-sim-line", String(n)); } catch (e) { /* ignore */ }
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "select", line: n }));
+}
+function renderLines(m) {
+  const bar = $("#linebar");
+  const lines = m.lines || [];
+  bar.hidden = lines.length < 2;
+  if (bar.hidden) return;
+  $("#buildingname").textContent = m.building || "";
+  const host = $("#lines");
+  if (host.children.length !== lines.length) {
+    host.textContent = "";
+    for (const l of lines) {
+      const b = h("button", { class: "line", role: "tab", "data-line": l.line },
+        h("span", { class: "lname" }), h("span", { class: "lstats" }));
+      b.addEventListener("click", () => selectLine(l.line));
+      host.append(b);
+    }
+  }
+  lines.forEach((l, i) => {
+    const b = host.children[i];
+    b.classList.toggle("active", l.line === currentLine);
+    b.setAttribute("aria-selected", l.line === currentLine ? "true" : "false");
+    $(".lname", b).textContent = `Line ${l.line} · ${l.name}`;
+    $(".lstats", b).textContent = `${l.gear} gear · ${l.devices} devices · ${l.lamps_on} on · ${l.power_w} W` + (l.powered ? "" : " · NO BUS POWER") + (l.errors ? ` · ${l.errors} errors` : "");
+  });
+}
+
 function connect() {
-  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
+  ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws?line=" + currentLine);
   ws.onopen = () => { $("#wsdot").classList.add("on"); $("#wsstate").textContent = "live"; };
   ws.onclose = () => { $("#wsdot").classList.remove("on"); $("#wsstate").textContent = "offline"; setTimeout(connect, 1500); };
   ws.onmessage = ev => {
     const m = JSON.parse(ev.data);
-    if (m.type === "hello") { monitor.rows = []; addRecords(m.history); setState(m.state); }
-    else if (m.type === "state") { addRecords(m.records); setState(m.state); }
-    else if (m.type === "progress") onProgress(m);
+    if (m.type === "hello") {
+      if (m.line !== currentLine) { currentLine = m.line; lineSwitched = true; }
+      monitor.rows = []; addRecords(m.history); renderLines(m); setState(m.state);
+    }
+    else if (m.type === "state") {
+      if (m.line !== currentLine) return;  // a frame sent before a line switch
+      addRecords(m.records); renderLines(m); setState(m.state);
+    }
+    else if (m.type === "progress") { if (!m.line || m.line === currentLine) onProgress(m); }
     else if (m.type === "job") onJob(m);
     else if (m.type === "error") toast(m.error, true);
   };
 }
 function wsAct(action, args) {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "act", action, ...args }));
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "act", action, line: currentLine, ...args }));
   else act(action, args);
 }
 
 /* ---------------- state ---------------- */
 function setState(s) {
-  const first = !state || state.name !== s.name;
+  const first = !state || state.name !== s.name || lineSwitched;
+  lineSwitched = false;
   state = s;
   $("#simname").textContent = "· " + s.name;
   $("#sim-desc").textContent = s.description || "";

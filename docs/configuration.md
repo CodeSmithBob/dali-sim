@@ -102,3 +102,38 @@ Actions (`do`), where the target is `A5`, `G2` or `BC`:
 - `daylight` toggles a daylight loop on that target.
 
 The YAML words `on` and `off` are read as booleans by YAML 1.1 parsers. The rule engine accepts them anyway: `off:` is OFF and `on:` is RECALL MAX.
+
+## Several DALI lines
+
+One DALI line holds at most 64 control gear and 64 control devices. A master or gateway with several DALI outputs drives several lines. Describe them under `lines:`. Each entry is a full line configuration, or a `file:` that takes a line from another file, plus overrides:
+
+```yaml
+name: Three-line building
+seed: 3            # each line gets its own seed derived from this one
+speed: 1.0         # shared by all lines
+lines:
+  - {file: building-64.yaml, name: Ground floor}
+  - {file: building-64.yaml, name: First floor}
+  - name: Second floor
+    gear:
+      - {name: "L{n:02d}", count: 64, start_address: 0, type: led}
+```
+
+- `file:` paths are relative to the building file.
+- A line inherits `speed`, `commissioned`, `initial_level`, `world` and `bus` from the top level unless it sets them.
+- The lines are separate buses: a broadcast on line 1 never reaches line 2.
+- All lines run in one simulator process: one web page (pick the line at the top) and one Docker container.
+
+Each line gets its own connections. Line N uses the base port + N − 1:
+
+| Connection | Line 1 | Line 2 | Line 3 |
+|---|---|---|---|
+| TCP API (`--tcp-port 5555`) | 5555 | 5556 | 5557 |
+| daliserver (`--daliserver-port 55825`) | 55825 | 55826 | 55827 |
+| virtual serial port (`--pty /tmp/dali`) | `/tmp/dali` | `/tmp/dali2` | `/tmp/dali3` |
+| fake USB stick (`--usb-stick tridonic,tridonic,tridonic`) | serial 0DA11001 | serial 0DA11002 | serial 0DA11003 |
+| hardware bridge (`--adapter tridonic@2`) | `tridonic` or `tridonic@1` | `tridonic@2` | `tridonic@3` |
+
+The TCP API also accepts a `"line": N` field on any port. CLI commands such as `dali-sim test` and `dali-sim commission` take `--line N`.
+
+If you load a scenario with fewer lines from the web page, the missing lines stay as empty lines, so the ports and fake sticks keep working.

@@ -108,11 +108,16 @@ STICKS = {
 class FakeUsbStick:
     """One fake stick.  ``fd`` lets tests pass a socket instead of /dev/uhid."""
 
-    def __init__(self, sim: Simulator, kind: str, path: str = "/dev/uhid", fd: int | None = None) -> None:
+    def __init__(self, sim: Simulator, kind: str, path: str = "/dev/uhid", fd: int | None = None,
+                 line: int = 1) -> None:
         if kind not in STICKS:
             raise ValueError(f"unknown stick {kind!r}; choose from {', '.join(STICKS)}")
         self.sim = sim
         self.kind = kind
+        self.line = line
+        #: Different per line, so a master with several sticks can tell them apart.
+        self.serial = 0x0DA11000 + line
+        self.uniq = f"dali-sim-{kind}-line{line}"
         self.model = STICKS[kind]
         self.path = path
         self.fd = fd
@@ -129,9 +134,13 @@ class FakeUsbStick:
             except PermissionError:
                 raise RuntimeError(f"no permission for {self.path}: run as root or see docs/hardware.md") from None
         m = self.model
-        self.emulator = m.emulator(self.sim.bus)
+        if m.emulator is TridonicEmulator:
+            self.emulator = TridonicEmulator(self.sim.bus, serial=self.serial)
+        else:
+            self.emulator = m.emulator(self.sim.bus)
         self.emulator.on_report = self._input
-        os.write(self.fd, create2_event(m.name, m.vid, m.pid, m.descriptor, uniq=f"dali-sim-{self.kind}"))
+        name = m.name if self.line == 1 else m.name.replace("(dali-sim)", f"(dali-sim line {self.line})")
+        os.write(self.fd, create2_event(name, m.vid, m.pid, m.descriptor, uniq=self.uniq))
         asyncio.get_running_loop().add_reader(self.fd, self._readable)
 
     async def stop(self) -> None:
@@ -146,8 +155,23 @@ class FakeUsbStick:
             os.close(self.fd)
         self.fd = None
 
+    def rebind(self, sim: Simulator) -> None:
+        """Follow another simulator (the scenario was replaced)."""
+        self.sim = sim
+        if self.emulator:
+            self.emulator.rebind(sim.bus)
+
     def hidraw_paths(self) -> list[str]:
-        return find_hidraw(self.model.vid, self.model.pid)
+        """hidraw nodes of this stick (other sticks may share the USB ID)."""
+        out = []
+        for path in find_hidraw(self.model.vid, self.model.pid):
+            try:
+                text = open(f"/sys/class/hidraw/{os.path.basename(path)}/device/uevent", encoding="ascii").read()
+            except OSError:
+                continue
+            if f"HID_UNIQ={self.uniq}" in text:
+                out.append(path)
+        return out
 
     def _input(self, report: bytes) -> None:
         if self.fd is not None:
