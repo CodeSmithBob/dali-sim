@@ -149,7 +149,7 @@ See [docs/certification.md](docs/certification.md).
 
 ## Contributing
 
-Contributions are very welcome: device types, adapters, firmware, tests, docs and UI. Read [CONTRIBUTING.md](CONTRIBUTING.md). Rule number one: **never paste text from the IEC 62386 standard.** Describe behaviour in your own words and cite the part and clause.
+Contributions are very welcome: device types, adapters, firmware, tests, docs and UI. Start with the [help wanted issues](https://github.com/CodeSmithBob/dali-sim/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) or the list at the end of [docs/connections.md](docs/connections.md#help-wanted). Read [CONTRIBUTING.md](CONTRIBUTING.md). Rule number one: **never paste text from the IEC 62386 standard.** Describe behaviour in your own words and cite the part and clause.
 
 ## License
 

@@ -132,19 +132,29 @@ Not supported yet 🛠: newer Lunatone DALI-2 USB models (if they do not use LUB
 
 Pick anything below and open an issue or a pull request. Read [CONTRIBUTING.md](../CONTRIBUTING.md) first: never paste text from the IEC 62386 standard.
 
-**Have hardware? Test it** (one evening each, no programming needed):
+All open tasks: [issues labelled "help wanted"](https://github.com/CodeSmithBob/dali-sim/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22). Easy starting points carry the label [good first issue](https://github.com/CodeSmithBob/dali-sim/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
-- 🟡 Tridonic, Lunatone or hasseb USB stick, or an AtxLED HAT: run `dali-sim adapters`, `dali-sim scan --adapter <name>` and `dali-sim test --adapter <name> --suite bus`, then fill in the "Hardware report" issue template.
-- 🟡 Fake USB stick on a real Linux machine or Raspberry Pi (`--usb-stick tridonic`) with your DALI master software. Does the master see the stick? Can it find and switch the lamps?
-- 🧪 Raspberry Pi GPIO with a DALI interface board: which board, which settings, do answers arrive in time?
-- 🟡 Docker with a real stick, the fake stick, or GPIO.
+**Have hardware? Test it** (no programming needed):
+
+- 🟡 Tridonic or older Lunatone DALI USB stick: [#1](https://github.com/CodeSmithBob/dali-sim/issues/1)
+- 🟡 hasseb DALI Master: [#2](https://github.com/CodeSmithBob/dali-sim/issues/2)
+- 🟡 AtxLED HAT on a Raspberry Pi: [#3](https://github.com/CodeSmithBob/dali-sim/issues/3)
+- 🟡 Lunatone LUBA interfaces, and checking the protocol against Lunatone's document: [#4](https://github.com/CodeSmithBob/dali-sim/issues/4)
+- 🟡 Fake USB stick on real Linux with DALI master software: [#5](https://github.com/CodeSmithBob/dali-sim/issues/5)
+- 🧪 Raspberry Pi GPIO with a DALI interface board: [#6](https://github.com/CodeSmithBob/dali-sim/issues/6)
+- 🟡 Docker with a real stick, the fake stick or GPIO: [#7](https://github.com/CodeSmithBob/dali-sim/issues/7)
 
 **Can build things?**
 
-- 🛠 Firmware for an RP2040 or ESP32 that speaks the [dali-sim serial protocol](serial-protocol.md), including the fast `B` (answer) command. This gives the simulator full answers on real wires.
-- 🛠 An open-hardware DALI interface board design (KiCad) for the Raspberry Pi header.
-- 🛠 A published Docker image for amd64 and arm64.
-- 🛠 Fake USB sticks for Windows or macOS.
-- 🛠 More interfaces: newer Lunatone and Tridonic DALI-2 USB models, Helvar and others.
+- 🛠 Firmware for an RP2040 or ESP32 that speaks the [dali-sim serial protocol](serial-protocol.md), so virtual lamps can answer over real wires: [#8](https://github.com/CodeSmithBob/dali-sim/issues/8)
+- 🛠 Open-hardware DALI interface board for the Raspberry Pi (KiCad): [#9](https://github.com/CodeSmithBob/dali-sim/issues/9)
+- 🛠 Published Docker image for amd64 and arm64: [#10](https://github.com/CodeSmithBob/dali-sim/issues/10)
+- 🛠 Fake USB sticks on Windows and macOS: [#11](https://github.com/CodeSmithBob/dali-sim/issues/11)
+- 🛠 Remote fake stick (stick on one machine, simulator on another): [#12](https://github.com/CodeSmithBob/dali-sim/issues/12)
+- 🛠 More interfaces: DALI-2 USB models, Helvar and others: [#13](https://github.com/CodeSmithBob/dali-sim/issues/13)
+
+**Like reading documents?**
+
+- Check the "To verify" protocol values against public sources: [#14](https://github.com/CodeSmithBob/dali-sim/issues/14)
 
 When something moves from 🟡 to ✅, update the tables on this page in the same pull request.
