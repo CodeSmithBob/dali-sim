@@ -13,7 +13,8 @@ An adapter is chosen with a spec string, ``name[:argument]``:
 ``atxled:/dev/ttyX``        AtxLED DALI HAT for Raspberry Pi (serial)
 ``serial:/dev/ttyX``        any interface speaking the dali-sim serial line
                             protocol (DIY firmware, see docs/serial-protocol.md)
-``gpio:tx=17,rx=27``        bit-banged DALI PHY on Raspberry Pi GPIO (pigpio)
+``gpio:tx=17,rx=27[,host=H]`` bit-banged DALI PHY on Raspberry Pi GPIO (pigpio
+                            daemon on this machine, or on host H)
 ==========================  =================================================
 """
 
@@ -66,7 +67,7 @@ def create(spec: str, **kw: Any) -> Adapter:
         return a
     if name == "gpio":
         opts = dict(p.split("=", 1) for p in arg.split(",") if "=" in p)
-        return cls(**{k: int(v) for k, v in opts.items()}, **kw)
+        return cls(**{k: int(v) if v.isdigit() else v for k, v in opts.items()}, **kw)
     if arg:
         kw["path"] = arg
     return cls(**kw)

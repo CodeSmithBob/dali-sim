@@ -107,3 +107,5 @@ def test_create_specs():
     assert create("remote:example.org:6000").port == 6000
     assert create("daliserver:somehost").port == 55825
     assert create("gpio:tx=5,rx=6").tx == 5
+    g = create("gpio:tx=5,rx=6,host=172.17.0.1,port=8888")
+    assert g._host == "172.17.0.1" and g._port == 8888
